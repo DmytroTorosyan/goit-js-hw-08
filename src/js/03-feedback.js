@@ -1,34 +1,37 @@
 import throttle from 'lodash.throttle';
 
-const LOCALSTORAGE_KEY = 'selectedFilters';
-const formEl = document.querySelector('.feedback-form');
+const refs = {
+  form: document.querySelector('.feedback-form'),
+};
 
-initForm();
+refs.form.addEventListener('input', throttle(onFormInput, 500));
+refs.form.addEventListener('submit', onFormSubmit);
 
-formEl.addEventListener('submit', onFormSubmit);
-formEl.addEventListener('input', throttle(onFormInput, 500));
+const STORAGE_KEY = 'feedback-form-state';
+let formData = {};
 
-function onFormSubmit(evt) {
-  evt.preventDefault();
-  const formData = new FormData(formEl);
-  formData.forEach((value, name) => console.log(value, name));
-  evt.currentTarget.reset();
-  localStorage.removeItem(LOCALSTORAGE_KEY);
+function onFormSubmit(e) {
+  e.preventDefault();
+  e.currentTarget.reset();
+  console.log(JSON.parse(localStorage.getItem(STORAGE_KEY)));
+  localStorage.removeItem(STORAGE_KEY);
 }
 
-function onFormInput(evt) {
-  let persistedFilters = localStorage.getItem(LOCALSTORAGE_KEY);
-  persistedFilters = persistedFilters ? JSON.parse(persistedFilters) : {};
-  persistedFilters[evt.target.name] = evt.target.value;
-  localStorage.setItem(LOCALSTORAGE_KEY, JSON.stringify(persistedFilters));
+function onFormInput() {
+  formData = {
+    email: `${refs.form.elements.email.value}`,
+    message: `${refs.form.elements.message.value}`,
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
 }
 
-function initForm() {
-  let persistedFilters = localStorage.getItem(LOCALSTORAGE_KEY);
-  if (persistedFilters) {
-    persistedFilters = JSON.parse(persistedFilters);
-    Object.entries(persistedFilters).forEach(([name, value]) => {
-      formEl.elements[name].value = value;
-    });
+function savedForm() {
+  const savedFormData = JSON.parse(localStorage.getItem(STORAGE_KEY));
+
+  if (savedFormData !== null) {
+    refs.form.elements.email.value = savedFormData.email;
+    refs.form.elements.message.value = savedFormData.message;
   }
 }
+
+savedForm();
